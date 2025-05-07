@@ -1,13 +1,146 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import MainLayout from '@/components/layout/MainLayout';
+import NotesList from '@/components/resources/NotesList';
+import { Button } from '@/components/ui/button';
+import { supabase } from '@/lib/supabase';
+import { useToast } from '@/components/ui/use-toast';
+import { Upload, BookOpenText } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Index = () => {
+  const [notes, setNotes] = useState<any[]>([]);
+  const [subjects, setSubjects] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    fetchNotes();
+  }, []);
+
+  const fetchNotes = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Get all notes
+      const { data: notesData, error: notesError } = await supabase
+        .from('resources')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (notesError) {
+        throw notesError;
+      }
+
+      setNotes(notesData || []);
+
+      // Extract unique subjects
+      const uniqueSubjects = Array.from(
+        new Set((notesData || []).map((note) => note.subject))
+      );
+      setSubjects(uniqueSubjects as string[]);
+
+    } catch (error) {
+      console.error('Error fetching notes:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch notes. Please try again later.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUpvote = async (noteId: string) => {
+    if (!user) {
+      toast({
+        title: 'Sign in required',
+        description: 'You need to sign in to upvote notes',
+        variant: 'default',
+      });
+      return;
+    }
+
+    try {
+      // First, get the current note
+      const { data: note, error: getError } = await supabase
+        .from('resources')
+        .select('upvotes')
+        .eq('id', noteId)
+        .single();
+
+      if (getError) throw getError;
+
+      // Update the upvote count
+      const newUpvoteCount = (note?.upvotes || 0) + 1;
+      const { error: updateError } = await supabase
+        .from('resources')
+        .update({ upvotes: newUpvoteCount })
+        .eq('id', noteId);
+
+      if (updateError) throw updateError;
+
+      // Update the local state
+      setNotes(
+        notes.map((note) =>
+          note.id === noteId ? { ...note, upvotes: newUpvoteCount } : note
+        )
+      );
+
+    } catch (error) {
+      console.error('Error upvoting note:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to upvote note. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
+    <MainLayout>
+      <div className="space-y-8">
+        <div className="text-center space-y-4">
+          <h1 className="text-3xl md:text-4xl font-bold">StudyBuddy</h1>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Discover and share study resources to help you ace your exams!
+          </p>
+          
+          <div className="flex justify-center gap-4 pt-2">
+            <Button
+              onClick={() => navigate('/upload')}
+              className="bg-primary-purple hover:bg-primary-purple/90"
+              disabled={!user}
+            >
+              <Upload size={18} className="mr-2" />
+              Upload Notes
+            </Button>
+            
+            <Button
+              variant="outline"
+              onClick={() => navigate(user ? '/my-notes' : '/login')}
+            >
+              <BookOpenText size={18} className="mr-2" />
+              {user ? 'My Notes' : 'Sign In'}
+            </Button>
+          </div>
+        </div>
+
+        <div>
+          <h2 className="text-2xl font-semibold mb-6">Recent Study Notes</h2>
+          <NotesList 
+            notes={notes} 
+            subjects={subjects} 
+            onUpvote={handleUpvote}
+            isLoading={isLoading} 
+          />
+        </div>
       </div>
-    </div>
+    </MainLayout>
   );
 };
 

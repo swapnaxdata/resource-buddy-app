@@ -1,8 +1,13 @@
-import { useLocation } from "react-router-dom";
+
+import React from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import MainLayout from "@/components/layout/MainLayout";
 
 const NotFound = () => {
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     console.error(
@@ -12,15 +17,24 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">404</h1>
-        <p className="text-xl text-gray-600 mb-4">Oops! Page not found</p>
-        <a href="/" className="text-blue-500 hover:text-blue-700 underline">
-          Return to Home
-        </a>
+    <MainLayout>
+      <div className="min-h-[70vh] flex flex-col items-center justify-center">
+        <h1 className="text-7xl font-bold text-primary-purple mb-4">404</h1>
+        <p className="text-xl text-gray-600 mb-6">Oops! This page doesn't exist</p>
+        <div className="flex gap-4">
+          <Button
+            variant="default"
+            className="bg-primary-purple hover:bg-primary-purple/90"
+            onClick={() => navigate("/")}
+          >
+            Back to Home
+          </Button>
+          <Button variant="outline" onClick={() => navigate(-1)}>
+            Go Back
+          </Button>
+        </div>
       </div>
-    </div>
+    </MainLayout>
   );
 };
 
