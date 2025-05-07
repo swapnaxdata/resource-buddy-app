@@ -24,3 +24,5 @@ export function generateFileName(fileName: string): string {
   
   return `${timestamp}_${randomString}.${extension}`;
 }
+
+// Note: We don't need to export supabase from here since we're importing it from @/integrations/supabase/client

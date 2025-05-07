@@ -31,7 +31,7 @@ type UserWithProfile = {
   id: string;
   email: string;
   role: string;
-  created_at: string;
+  created_at?: string; // Make this optional to match the data from Supabase
 };
 
 const Admin = () => {
