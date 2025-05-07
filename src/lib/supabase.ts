@@ -1,12 +1,6 @@
 
 import { createClient } from '@supabase/supabase-js';
-
-// Initialize the Supabase client
-// These values will be replaced once the user connects their Supabase project
-const supabaseUrl = 'https://your-project-url.supabase.co';
-const supabaseKey = 'your-anon-key';
-
-export const supabase = createClient(supabaseUrl, supabaseKey);
+import { supabase } from '@/integrations/supabase/client';
 
 // Function to get a readable error message from Supabase errors
 export function getErrorMessage(error: any): string {

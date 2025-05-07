@@ -9,7 +9,8 @@ import {
   BookOpenText,
   Upload,
   FileText,
-  Settings
+  Settings,
+  Shield
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -49,7 +50,8 @@ const Navbar = () => {
                 My Notes
               </Link>
               {isAdmin && (
-                <Link to="/admin" className={`text-sm hover:text-primary-purple ${location.pathname === '/admin' ? 'text-primary-purple font-medium' : 'text-gray-600'}`}>
+                <Link to="/admin" className={`text-sm hover:text-primary-purple ${location.pathname === '/admin' ? 'text-primary-purple font-medium' : 'text-gray-600'} flex items-center gap-1`}>
+                  <Shield size={14} />
                   Admin
                 </Link>
               )}
@@ -60,10 +62,17 @@ const Navbar = () => {
         <div className="flex items-center gap-2">
           {user ? (
             <div className="flex items-center gap-4">
+              {profile && (
+                <div className="hidden md:flex items-center gap-1 px-3 py-1 bg-primary-purple/10 rounded-full">
+                  <span className="text-sm font-medium text-primary-purple">
+                    {profile.role}
+                  </span>
+                </div>
+              )}
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate('/profile')}
+                onClick={() => navigate('/my-notes')}
                 className="flex items-center gap-2"
               >
                 <User size={18} />

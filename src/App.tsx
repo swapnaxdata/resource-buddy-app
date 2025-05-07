@@ -7,6 +7,10 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "@/pages/Index";
 import Login from "@/pages/Login";
+import Admin from "@/pages/Admin";
+import Upload from "@/pages/Upload";
+import MyNotes from "@/pages/MyNotes";
+import NoteDetail from "@/pages/NoteDetail";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,7 +25,10 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
-            {/* Will add more routes as we develop them */}
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/upload" element={<Upload />} />
+            <Route path="/my-notes" element={<MyNotes />} />
+            <Route path="/note/:id" element={<NoteDetail />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </TooltipProvider>

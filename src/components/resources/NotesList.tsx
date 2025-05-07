@@ -14,13 +14,23 @@ interface NotesListProps {
     user_email: string;
     created_at: string;
     upvotes: number;
+    file_url?: string;
   }>;
   subjects?: string[];
   onUpvote?: (id: string) => void;
+  onDelete?: (id: string) => void;
   isLoading?: boolean;
+  showActions?: boolean;
 }
 
-const NotesList = ({ notes, subjects = [], onUpvote, isLoading = false }: NotesListProps) => {
+const NotesList = ({ 
+  notes, 
+  subjects = [], 
+  onUpvote, 
+  onDelete,
+  isLoading = false,
+  showActions = false
+}: NotesListProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('');
 
@@ -78,7 +88,13 @@ const NotesList = ({ notes, subjects = [], onUpvote, isLoading = false }: NotesL
       {filteredNotes.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredNotes.map((note) => (
-            <NoteCard key={note.id} note={note} onUpvote={onUpvote} />
+            <NoteCard 
+              key={note.id} 
+              note={note} 
+              onUpvote={onUpvote}
+              onDelete={showActions ? onDelete : undefined}
+              showActions={showActions}
+            />
           ))}
         </div>
       ) : (
