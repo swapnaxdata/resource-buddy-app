@@ -32,11 +32,11 @@ const NotesList = ({
   showActions = false
 }: NotesListProps) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSubject, setSelectedSubject] = useState('');
+  const [selectedSubject, setSelectedSubject] = useState('all');
 
   const filteredNotes = notes.filter((note) => {
     const matchesSearch = note.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesSubject = selectedSubject ? note.subject === selectedSubject : true;
+    const matchesSubject = selectedSubject === 'all' ? true : note.subject === selectedSubject;
     return matchesSearch && matchesSubject;
   });
 
@@ -73,7 +73,7 @@ const NotesList = ({
                 <SelectValue placeholder="Filter by subject" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Subjects</SelectItem>
+                <SelectItem value="all">All Subjects</SelectItem>
                 {subjects.map((subject) => (
                   <SelectItem key={subject} value={subject}>
                     {subject}
@@ -103,7 +103,7 @@ const NotesList = ({
           <Button 
             onClick={() => {
               setSearchTerm('');
-              setSelectedSubject('');
+              setSelectedSubject('all');
             }}
             variant="link"
             className="mt-2"
