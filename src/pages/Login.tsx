@@ -17,14 +17,27 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose
+} from '@/components/ui/dialog';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [forgotEmail, setForgotEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const [activeTab, setActiveTab] = useState('signin');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, resetPassword } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -101,6 +114,42 @@ const Login = () => {
     }
   };
 
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!forgotEmail) {
+      toast({
+        title: 'Error',
+        description: 'Please enter your email address',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    try {
+      setIsResetting(true);
+      await resetPassword(forgotEmail);
+      
+      toast({
+        title: 'Password Reset Email Sent',
+        description: 'Check your email for a link to reset your password. If it doesn\'t appear within a few minutes, check your spam folder.',
+      });
+      
+      // Close dialog and clear field
+      setIsDialogOpen(false);
+      setForgotEmail('');
+    } catch (error) {
+      console.error('Reset password error:', error);
+      toast({
+        title: 'Password Reset Failed',
+        description: getErrorMessage(error),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   return (
     <MainLayout>
       <div className="flex justify-center items-center min-h-[70vh] py-8">
@@ -136,13 +185,50 @@ const Login = () => {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label htmlFor="password">Password</Label>
-                        <Button 
-                          variant="link" 
-                          className="text-xs p-0 h-auto font-normal text-gray-500"
-                          type="button"
-                        >
-                          Forgot password?
-                        </Button>
+                        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                          <DialogTrigger asChild>
+                            <Button 
+                              variant="link" 
+                              className="text-xs p-0 h-auto font-normal text-gray-500"
+                              type="button"
+                            >
+                              Forgot password?
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-[425px]">
+                            <DialogHeader>
+                              <DialogTitle>Reset your password</DialogTitle>
+                              <DialogDescription>
+                                Enter your email address and we'll send you a link to reset your password.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <form onSubmit={handleResetPassword} className="space-y-4 py-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="forgot-email">Email</Label>
+                                <Input 
+                                  id="forgot-email" 
+                                  type="email" 
+                                  placeholder="you@example.com"
+                                  value={forgotEmail}
+                                  onChange={(e) => setForgotEmail(e.target.value)}
+                                  required
+                                />
+                              </div>
+                              <DialogFooter className="pt-4">
+                                <DialogClose asChild>
+                                  <Button type="button" variant="outline">Cancel</Button>
+                                </DialogClose>
+                                <Button 
+                                  type="submit"
+                                  disabled={isResetting}
+                                  className="bg-primary-purple hover:bg-primary-purple/90"
+                                >
+                                  {isResetting ? 'Sending...' : 'Send Reset Link'}
+                                </Button>
+                              </DialogFooter>
+                            </form>
+                          </DialogContent>
+                        </Dialog>
                       </div>
                       <Input 
                         id="password" 

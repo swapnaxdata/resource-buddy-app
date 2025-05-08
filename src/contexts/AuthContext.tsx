@@ -2,7 +2,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useToast } from '@/components/ui/use-toast';
 
 type AuthContextType = {
   session: Session | null;
@@ -13,6 +14,8 @@ type AuthContextType = {
   signUp: (email: string, password: string) => Promise<any>;
   signIn: (email: string, password: string) => Promise<any>;
   signOut: () => Promise<any>;
+  resetPassword: (email: string) => Promise<any>;
+  updatePassword: (password: string) => Promise<any>;
   checkIsAdmin: () => boolean;
 };
 
@@ -24,6 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<any | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     // Get initial session
@@ -65,6 +69,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('Error fetching profile:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load user profile',
+          variant: 'destructive',
+        });
         setProfile(null);
         setIsAdmin(false);
       } else {
@@ -148,6 +157,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const resetPassword = async (email: string) => {
+    try {
+      // Get the current URL to use as the redirect URL base
+      const baseUrl = window.location.origin;
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${baseUrl}/reset-password`,
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error resetting password:', error);
+      throw error;
+    }
+  };
+  
+  const updatePassword = async (password: string) => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password,
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error updating password:', error);
+      throw error;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -159,6 +205,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signUp,
         signIn,
         signOut,
+        resetPassword,
+        updatePassword,
         checkIsAdmin,
       }}
     >
@@ -179,20 +227,32 @@ export const useAuth = () => {
 export const RequireAdmin = ({ children }: { children: React.ReactNode }) => {
   const { user, isAdmin, isLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { toast } = useToast();
   
   useEffect(() => {
     if (!isLoading) {
       if (!user) {
-        navigate('/login');
+        toast({
+          title: "Authentication Required",
+          description: "You must be logged in to access this page",
+          variant: "destructive"
+        });
+        navigate('/login', { state: { from: location } });
       } else if (!isAdmin) {
+        toast({
+          title: "Access Denied",
+          description: "You don't have permission to access the admin area",
+          variant: "destructive"
+        });
         navigate('/');
       }
     }
-  }, [user, isAdmin, isLoading, navigate]);
+  }, [user, isAdmin, isLoading, navigate, location, toast]);
   
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-[50vh]">
+      <div className="flex justify-center items-center min-h-[80vh]">
         <p className="text-lg">Loading...</p>
       </div>
     );

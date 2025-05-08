@@ -1,73 +1,77 @@
-# Welcome to your Lovable project
 
-## Project info
+# StudyBuddy Application
 
-**URL**: https://lovable.dev/projects/c458b720-a2cf-4f5e-b100-b75f88663ffc
+StudyBuddy is a comprehensive platform for students to share and discover study materials. This application allows users to upload, browse, and download study notes, while also featuring user authentication, admin capabilities, and resource management.
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+- **User Authentication**: Sign up, login, forgot password flow
+- **Study Notes Management**: Upload, view, upvote, and download study notes
+- **Admin Dashboard**: Manage users and resources
+- **Search & Filter**: Find notes by subject or keyword
+- **User Profiles**: View and manage your uploaded content
+- **PDF Handling**: Preview and download PDF study materials
+- **Responsive Design**: Works on desktop and mobile devices
 
-**Use Lovable**
+## Getting Started
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/c458b720-a2cf-4f5e-b100-b75f88663ffc) and start prompting.
+### Default Admin User
 
-Changes made via Lovable will be committed automatically to this repo.
+The application is initialized with a default admin user:
+- Email: admin@studybuddy.com
+- Password: Admin123!
 
-**Use your preferred IDE**
+### User Routes
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- **/** - Home page displaying all notes
+- **/login** - User authentication page
+- **/register** - User registration page (accessible via the login page)
+- **/confirm** - Email confirmation page
+- **/reset-password** - Password reset page
+- **/admin** - Admin dashboard (admin users only)
+- **/upload** - Page to upload new notes (authenticated users only)
+- **/my-notes** - Page displaying user's uploaded notes (authenticated users only)
+- **/note/:id** - Detail page for individual notes
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## User Roles
 
-Follow these steps:
+- **User**: Can upload, view, download, and upvote notes. Can manage their own content.
+- **Admin**: Has full access to the system, including managing users and all content.
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## Technical Details
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### Technology Stack
 
-# Step 3: Install the necessary dependencies.
-npm i
+- Frontend: React, TypeScript, Tailwind CSS, shadcn/ui
+- Backend: Supabase (authentication, database, storage)
+- Hosting: [Your hosting provider]
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+### Authentication Flow
 
-**Edit a file directly in GitHub**
+1. **Sign Up**: Users register with email and password
+2. **Email Confirmation**: Users receive a confirmation email
+3. **Password Reset**: Users can reset their password via email
+4. **Role-Based Access**: Different permissions for regular users and admin users
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Development Setup
 
-**Use GitHub Codespaces**
+To run this project locally:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Start the development server: `npm run dev`
+4. The application will be available at: `http://localhost:5173`
 
-## What technologies are used for this project?
+For more detailed instructions, see the `AdminInstructions.md` file for admin-specific functionality.
 
-This project is built with:
+## Database Structure
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- **profiles**: User profile information and roles
+- **resources**: Study notes and materials
+- **storage**: PDF files and attachments
 
-## How can I deploy this project?
+## Troubleshooting
 
-Simply open [Lovable](https://lovable.dev/projects/c458b720-a2cf-4f5e-b100-b75f88663ffc) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+- **Admin Access Issues**: See `AdminInstructions.md`
+- **Upload Problems**: Ensure file is a valid PDF under 10MB
+- **Email Confirmation**: Check spam folder for confirmation emails

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -35,6 +34,7 @@ const NoteDetail = () => {
   const { id } = useParams<{ id: string }>();
   const [note, setNote] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUpvoting, setIsUpvoting] = useState(false);
   
   const { user, profile } = useAuth();
   const { toast } = useToast();
@@ -78,6 +78,10 @@ const NoteDetail = () => {
     if (!user || !note) return;
     
     try {
+      // Prevent double clicks
+      if (isUpvoting) return;
+      setIsUpvoting(true);
+      
       // Get current upvotes count
       const currentUpvotes = note.upvotes || 0;
       
@@ -109,6 +113,8 @@ const NoteDetail = () => {
         description: 'Failed to upvote',
         variant: 'destructive',
       });
+    } finally {
+      setIsUpvoting(false);
     }
   };
   
@@ -116,6 +122,34 @@ const NoteDetail = () => {
     if (!note) return;
     
     try {
+      // First, try to delete from storage if there's a file URL
+      if (note.file_url) {
+        const fileUrl = note.file_url;
+        const filePath = fileUrl.split('/').pop();
+        
+        if (filePath) {
+          // Extract bucket and path
+          const parts = fileUrl.split('/');
+          const bucketIndex = parts.findIndex(part => part === 'object') + 1;
+          
+          if (bucketIndex > 0 && bucketIndex < parts.length) {
+            const bucket = parts[bucketIndex];
+            const path = parts.slice(bucketIndex + 1).join('/');
+            
+            const { error } = await supabase
+              .storage
+              .from(bucket)
+              .remove([path]);
+              
+            if (error) {
+              console.error('Error deleting file from storage:', error);
+              // Continue even if storage deletion fails
+            }
+          }
+        }
+      }
+      
+      // Then delete the database record
       const { error } = await supabase
         .from('resources')
         .delete()
@@ -130,7 +164,7 @@ const NoteDetail = () => {
         description: 'Note deleted successfully',
       });
       
-      navigate(-1);
+      navigate('/');
     } catch (error) {
       console.error('Error deleting note:', error);
       toast({

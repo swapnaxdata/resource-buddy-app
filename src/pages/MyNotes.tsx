@@ -75,6 +75,32 @@ const MyNotes = () => {
   
   const handleDeleteNote = async (noteId: string) => {
     try {
+      // First, find the note to get the file URL
+      const noteToDelete = notes.find(note => note.id === noteId);
+      
+      if (noteToDelete?.file_url) {
+        const fileUrl = noteToDelete.file_url;
+        const parts = fileUrl.split('/');
+        const bucketIndex = parts.findIndex(part => part === 'object') + 1;
+        
+        if (bucketIndex > 0 && bucketIndex < parts.length) {
+          const bucket = parts[bucketIndex];
+          const path = parts.slice(bucketIndex + 1).join('/');
+          
+          // Delete the file from storage
+          const { error: storageError } = await supabase
+            .storage
+            .from(bucket)
+            .remove([path]);
+            
+          if (storageError) {
+            console.error('Error deleting file from storage:', storageError);
+            // Continue even if storage deletion fails
+          }
+        }
+      }
+      
+      // Then delete the database record
       const { error } = await supabase
         .from('resources')
         .delete()

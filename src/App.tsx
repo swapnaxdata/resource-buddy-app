@@ -13,6 +13,7 @@ import MyNotes from "@/pages/MyNotes";
 import NoteDetail from "@/pages/NoteDetail";
 import NotFound from "@/pages/NotFound";
 import Confirm from "@/pages/Confirm";
+import ResetPassword from "@/pages/ResetPassword";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/my-notes" element={<MyNotes />} />
             <Route path="/note/:id" element={<NoteDetail />} />
             <Route path="/confirm" element={<Confirm />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </TooltipProvider>
