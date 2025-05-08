@@ -8,6 +8,7 @@ import { useToast } from '@/components/ui/use-toast';
 import NotesList from '@/components/resources/NotesList';
 import { Button } from '@/components/ui/button';
 import { Upload } from 'lucide-react';
+import { toast as sonnerToast } from "sonner";
 
 const MyNotes = () => {
   const [notes, setNotes] = useState<any[]>([]);
@@ -78,6 +79,13 @@ const MyNotes = () => {
       // First, find the note to get the file URL
       const noteToDelete = notes.find(note => note.id === noteId);
       
+      if (!noteToDelete) {
+        throw new Error('Note not found');
+      }
+      
+      // Optimistically update UI first
+      setNotes(notes.filter(note => note.id !== noteId));
+      
       if (noteToDelete?.file_url) {
         const fileUrl = noteToDelete.file_url;
         const parts = fileUrl.split('/');
@@ -107,16 +115,13 @@ const MyNotes = () => {
         .eq('id', noteId);
       
       if (error) {
+        // If deletion fails, restore the note in the UI
+        setNotes(prev => [...prev, noteToDelete]);
         throw error;
       }
       
-      // Update local state
-      setNotes(notes.filter(note => note.id !== noteId));
+      sonnerToast.success('Note deleted successfully');
       
-      toast({
-        title: 'Success',
-        description: 'Note deleted successfully',
-      });
     } catch (error) {
       console.error('Error deleting note:', error);
       toast({

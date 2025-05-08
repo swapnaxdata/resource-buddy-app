@@ -4,6 +4,7 @@ import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
+import { toast as sonnerToast } from "sonner";
 
 type AuthContextType = {
   session: Session | null;
@@ -61,27 +62,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchProfile = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error) {
+      // Added additional error handling and retries for profile fetching
+      let retries = 3;
+      let profileData = null;
+      let error = null;
+      
+      while (retries > 0 && !profileData) {
+        const { data, error: fetchError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+        
+        if (data) {
+          profileData = data;
+          break;
+        }
+        
+        error = fetchError;
+        retries--;
+        
+        if (retries > 0) {
+          // Wait a bit before retrying
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+      
+      if (profileData) {
+        setProfile(profileData);
+        setIsAdmin(profileData?.role === 'admin');
+      } else {
         console.error('Error fetching profile:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load user profile',
-          variant: 'destructive',
+        sonnerToast.error('Failed to load user profile', {
+          description: 'Please refresh the page or try again later'
         });
         setProfile(null);
         setIsAdmin(false);
-      } else {
-        setProfile(data);
-        setIsAdmin(data?.role === 'admin');
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
+      sonnerToast.error('Failed to load user profile', {
+        description: 'Please refresh the page or try again later'
+      });
       setProfile(null);
       setIsAdmin(false);
     } finally {

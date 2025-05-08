@@ -44,7 +44,7 @@ WHERE email = '[USER_EMAIL]';
 1. First, register a new user through the normal sign-up flow
 2. Once the user is created, use one of the methods above to promote them to admin
 
-## SQL to Create the Initial Admin User
+## SQL to Create the Default Admin User
 
 If you need to create the default admin user manually, run the following SQL in the Supabase SQL Editor:
 

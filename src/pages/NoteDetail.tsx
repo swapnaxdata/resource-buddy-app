@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
+import { toast as sonnerToast } from "sonner";
 import { 
   FileText, 
   User, 
@@ -84,27 +85,29 @@ const NoteDetail = () => {
       
       // Get current upvotes count
       const currentUpvotes = note.upvotes || 0;
+
+      // Optimistically update UI first
+      setNote({
+        ...note,
+        upvotes: currentUpvotes + 1
+      });
       
-      // Update the upvote count
+      // Update the upvote count in database
       const { error } = await supabase
         .from('resources')
         .update({ upvotes: currentUpvotes + 1 })
         .eq('id', note.id);
       
       if (error) {
+        // Revert optimistic update if error occurs
+        setNote({
+          ...note,
+          upvotes: currentUpvotes
+        });
         throw error;
       }
       
-      // Update local state
-      setNote({
-        ...note,
-        upvotes: currentUpvotes + 1
-      });
-      
-      toast({
-        title: 'Success',
-        description: 'You upvoted this note',
-      });
+      sonnerToast.success('You upvoted this note');
       
     } catch (error) {
       console.error('Error upvoting:', error);
