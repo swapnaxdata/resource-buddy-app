@@ -20,6 +20,7 @@ const FileUpload = ({ onUploadComplete }: FileUploadProps) => {
   const [subject, setSubject] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [fileError, setFileError] = useState('');
+  const [uploadProgress, setUploadProgress] = useState(0);
   
   const { toast } = useToast();
   const { user } = useAuth();
@@ -87,10 +88,13 @@ const FileUpload = ({ onUploadComplete }: FileUploadProps) => {
     
     try {
       setIsUploading(true);
+      setUploadProgress(10);
       
       // Generate a unique file name
       const fileName = generateFileName(file.name);
       const folderPath = `${user.id}/${fileName}`;
+      
+      setUploadProgress(30);
       
       // Upload file to storage
       const { data: fileData, error: fileError } = await supabase.storage
@@ -101,6 +105,8 @@ const FileUpload = ({ onUploadComplete }: FileUploadProps) => {
         throw fileError;
       }
       
+      setUploadProgress(60);
+      
       // Get the public URL for the file
       const { data: urlData } = await supabase.storage
         .from(STORAGE_BUCKET)
@@ -109,6 +115,8 @@ const FileUpload = ({ onUploadComplete }: FileUploadProps) => {
       if (!urlData?.publicUrl) {
         throw new Error('Failed to generate public URL for the file');
       }
+      
+      setUploadProgress(80);
       
       // Save record to database
       const { error: dbError } = await supabase.from('resources').insert({
@@ -122,6 +130,8 @@ const FileUpload = ({ onUploadComplete }: FileUploadProps) => {
         throw dbError;
       }
       
+      setUploadProgress(100);
+      
       // Reset form
       setFile(null);
       setTitle('');
@@ -132,18 +142,23 @@ const FileUpload = ({ onUploadComplete }: FileUploadProps) => {
         description: 'Your notes have been uploaded successfully',
       });
       
-      // Trigger callback to refresh the notes list
-      onUploadComplete();
+      // Safely trigger callback to refresh the notes list
+      setTimeout(() => {
+        if (typeof onUploadComplete === 'function') {
+          onUploadComplete();
+        }
+      }, 300);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading file:', error);
       toast({
         title: 'Upload failed',
-        description: 'There was an error uploading your file. Please try again.',
+        description: error.message || 'There was an error uploading your file. Please try again.',
         variant: 'destructive',
       });
     } finally {
       setIsUploading(false);
+      setUploadProgress(0);
     }
   };
   
@@ -189,6 +204,15 @@ const FileUpload = ({ onUploadComplete }: FileUploadProps) => {
             Upload a PDF file. Maximum file size: 5MB.
           </p>
         </div>
+        
+        {isUploading && (
+          <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
+            <div 
+              className="bg-primary-purple h-2.5 rounded-full transition-all duration-300"
+              style={{ width: `${uploadProgress}%` }}
+            ></div>
+          </div>
+        )}
         
         <Button
           type="submit"

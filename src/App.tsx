@@ -12,6 +12,7 @@ import Upload from "@/pages/Upload";
 import MyNotes from "@/pages/MyNotes";
 import NoteDetail from "@/pages/NoteDetail";
 import NotFound from "@/pages/NotFound";
+import Confirm from "@/pages/Confirm";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/upload" element={<Upload />} />
             <Route path="/my-notes" element={<MyNotes />} />
             <Route path="/note/:id" element={<NoteDetail />} />
+            <Route path="/confirm" element={<Confirm />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </TooltipProvider>

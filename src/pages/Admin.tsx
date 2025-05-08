@@ -1,8 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, RequireAdmin } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { 
@@ -34,26 +33,13 @@ type UserWithProfile = {
   created_at?: string; // Make this optional to match the data from Supabase
 };
 
-const Admin = () => {
+const AdminPage = () => {
   const [users, setUsers] = useState<UserWithProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [resourceCount, setResourceCount] = useState<Record<string, number>>({});
   
-  const { user, profile } = useAuth();
+  const { profile } = useAuth();
   const { toast } = useToast();
-  const navigate = useNavigate();
-  
-  // Protect this route - only accessible to admins
-  useEffect(() => {
-    if (!isLoading && (!user || profile?.role !== 'admin')) {
-      navigate('/');
-      toast({
-        title: 'Access Denied',
-        description: 'You must be an admin to access this page',
-        variant: 'destructive',
-      });
-    }
-  }, [user, profile, isLoading, navigate, toast]);
   
   // Fetch all users
   useEffect(() => {
@@ -271,5 +257,12 @@ const Admin = () => {
     </MainLayout>
   );
 };
+
+// Use the RequireAdmin component to wrap the AdminPage
+const Admin = () => (
+  <RequireAdmin>
+    <AdminPage />
+  </RequireAdmin>
+);
 
 export default Admin;

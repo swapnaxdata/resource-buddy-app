@@ -2,15 +2,18 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 type AuthContextType = {
   session: Session | null;
   user: User | null;
   profile: any | null;
   isLoading: boolean;
+  isAdmin: boolean;
   signUp: (email: string, password: string) => Promise<any>;
   signIn: (email: string, password: string) => Promise<any>;
   signOut: () => Promise<any>;
+  checkIsAdmin: () => boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -19,6 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -43,6 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         fetchProfile(session.user.id);
       } else {
         setProfile(null);
+        setIsAdmin(false);
         setIsLoading(false);
       }
     });
@@ -61,15 +66,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) {
         console.error('Error fetching profile:', error);
         setProfile(null);
+        setIsAdmin(false);
       } else {
         setProfile(data);
+        setIsAdmin(data?.role === 'admin');
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
       setProfile(null);
+      setIsAdmin(false);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const checkIsAdmin = () => {
+    return profile?.role === 'admin';
   };
 
   const signUp = async (email: string, password: string) => {
@@ -143,9 +155,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         profile,
         isLoading,
+        isAdmin,
         signUp,
         signIn,
         signOut,
+        checkIsAdmin,
       }}
     >
       {children}
@@ -159,4 +173,30 @@ export const useAuth = () => {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
+};
+
+// Create a route guard component for admin routes
+export const RequireAdmin = ({ children }: { children: React.ReactNode }) => {
+  const { user, isAdmin, isLoading } = useAuth();
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    if (!isLoading) {
+      if (!user) {
+        navigate('/login');
+      } else if (!isAdmin) {
+        navigate('/');
+      }
+    }
+  }, [user, isAdmin, isLoading, navigate]);
+  
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[50vh]">
+        <p className="text-lg">Loading...</p>
+      </div>
+    );
+  }
+  
+  return isAdmin ? <>{children}</> : null;
 };
