@@ -15,7 +15,6 @@ import {
   Calendar, 
   ArrowUp, 
   ChevronLeft, 
-  Download,
   Trash,
   ExternalLink
 } from 'lucide-react';
@@ -107,7 +106,10 @@ const NoteDetail = () => {
         throw error;
       }
       
-      sonnerToast.success('You upvoted this note');
+      toast({
+        title: "Success",
+        description: "You upvoted this note",
+      });
       
     } catch (error) {
       console.error('Error upvoting:', error);
@@ -128,26 +130,23 @@ const NoteDetail = () => {
       // First, try to delete from storage if there's a file URL
       if (note.file_url) {
         const fileUrl = note.file_url;
-        const filePath = fileUrl.split('/').pop();
         
-        if (filePath) {
-          // Extract bucket and path
-          const parts = fileUrl.split('/');
-          const bucketIndex = parts.findIndex(part => part === 'object') + 1;
+        // Extract bucket and path
+        const parts = fileUrl.split('/');
+        const bucketIndex = parts.findIndex(part => part === 'object') + 1;
+        
+        if (bucketIndex > 0 && bucketIndex < parts.length) {
+          const bucket = parts[bucketIndex];
+          const path = parts.slice(bucketIndex + 1).join('/');
           
-          if (bucketIndex > 0 && bucketIndex < parts.length) {
-            const bucket = parts[bucketIndex];
-            const path = parts.slice(bucketIndex + 1).join('/');
+          const { error: storageError } = await supabase
+            .storage
+            .from(bucket)
+            .remove([path]);
             
-            const { error } = await supabase
-              .storage
-              .from(bucket)
-              .remove([path]);
-              
-            if (error) {
-              console.error('Error deleting file from storage:', error);
-              // Continue even if storage deletion fails
-            }
+          if (storageError) {
+            console.error('Error deleting file from storage:', storageError);
+            // Continue even if storage deletion fails
           }
         }
       }
@@ -238,7 +237,7 @@ const NoteDetail = () => {
                   variant="outline" 
                   size="sm"
                   onClick={handleUpvote}
-                  disabled={!user}
+                  disabled={!user || isUpvoting}
                   className="flex items-center gap-1"
                 >
                   <ArrowUp size={16} />

@@ -8,7 +8,6 @@ import { useToast } from '@/components/ui/use-toast';
 import NotesList from '@/components/resources/NotesList';
 import { Button } from '@/components/ui/button';
 import { Upload } from 'lucide-react';
-import { toast as sonnerToast } from "sonner";
 
 const MyNotes = () => {
   const [notes, setNotes] = useState<any[]>([]);
@@ -120,7 +119,10 @@ const MyNotes = () => {
         throw error;
       }
       
-      sonnerToast.success('Note deleted successfully');
+      toast({
+        title: "Success",
+        description: "Note deleted successfully",
+      });
       
     } catch (error) {
       console.error('Error deleting note:', error);

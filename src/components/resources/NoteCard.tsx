@@ -7,6 +7,7 @@ import { FileText, ArrowUp, User, Calendar, ExternalLink, Trash, Download } from
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/components/ui/use-toast';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,11 +38,24 @@ interface NoteCardProps {
 const NoteCard = ({ note, onUpvote, onDelete, showActions = false }: NoteCardProps) => {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+  const { toast } = useToast();
   
   const handleUpvote = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onUpvote) {
       onUpvote(note.id);
+    } else if (user) {
+      // Fallback for when onUpvote is not provided but user is logged in
+      toast({
+        title: "Action not supported",
+        description: "Upvoting is not available in this view.",
+      });
+    } else {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to upvote notes.",
+        variant: "destructive",
+      });
     }
   };
 
