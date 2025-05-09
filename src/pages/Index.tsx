@@ -81,7 +81,7 @@ const Index = () => {
       // Calculate the new upvote count
       const newUpvoteCount = (note?.upvotes || 0) + 1;
       
-      // Create a specialized function to update just the upvote count
+      // Call the increment_upvote function using RPC
       const { error: updateError } = await supabase.rpc('increment_upvote', { 
         resource_id: noteId 
       });

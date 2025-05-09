@@ -91,11 +91,10 @@ const NoteDetail = () => {
         upvotes: currentUpvotes + 1
       });
       
-      // Update the upvote count in database
-      const { error } = await supabase
-        .from('resources')
-        .update({ upvotes: currentUpvotes + 1 })
-        .eq('id', note.id);
+      // Call the increment_upvote function using RPC
+      const { error } = await supabase.rpc('increment_upvote', {
+        resource_id: note.id
+      });
       
       if (error) {
         // Revert optimistic update if error occurs
@@ -111,11 +110,11 @@ const NoteDetail = () => {
         description: "You upvoted this note",
       });
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error upvoting:', error);
       toast({
         title: 'Error',
-        description: 'Failed to upvote',
+        description: `Failed to upvote: ${error.message || 'Unknown error'}`,
         variant: 'destructive',
       });
     } finally {
@@ -167,11 +166,11 @@ const NoteDetail = () => {
       });
       
       navigate('/');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting note:', error);
       toast({
         title: 'Error',
-        description: 'Failed to delete note',
+        description: `Failed to delete note: ${error.message || 'Unknown error'}`,
         variant: 'destructive',
       });
     }
