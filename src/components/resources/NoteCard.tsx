@@ -93,7 +93,6 @@ const NoteCard = ({ note, onUpvote, onDelete, showActions = false }: NoteCardPro
             variant="ghost" 
             size="icon" 
             onClick={handleUpvote}
-            disabled={!user}
             className="h-8 w-8"
           >
             <ArrowUp size={16} />

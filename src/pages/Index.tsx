@@ -66,36 +66,49 @@ const Index = () => {
     }
 
     try {
-      // First, get the current note
+      // First, get the current note to get its current upvote count
       const { data: note, error: getError } = await supabase
         .from('resources')
         .select('upvotes')
         .eq('id', noteId)
         .single();
 
-      if (getError) throw getError;
+      if (getError) {
+        console.error('Error fetching note details:', getError);
+        throw getError;
+      }
 
-      // Update the upvote count
+      // Calculate the new upvote count
       const newUpvoteCount = (note?.upvotes || 0) + 1;
-      const { error: updateError } = await supabase
-        .from('resources')
-        .update({ upvotes: newUpvoteCount })
-        .eq('id', noteId);
+      
+      // Create a specialized function to update just the upvote count
+      const { error: updateError } = await supabase.rpc('increment_upvote', { 
+        resource_id: noteId 
+      });
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Error updating upvote:', updateError);
+        throw updateError;
+      }
 
-      // Update the local state
+      // Update the local state to reflect the change
       setNotes(
         notes.map((note) =>
           note.id === noteId ? { ...note, upvotes: newUpvoteCount } : note
         )
       );
 
-    } catch (error) {
+      toast({
+        title: 'Success',
+        description: 'Note upvoted successfully!',
+        variant: 'default',
+      });
+
+    } catch (error: any) {
       console.error('Error upvoting note:', error);
       toast({
         title: 'Error',
-        description: 'Failed to upvote note. Please try again.',
+        description: `Failed to upvote note: ${error.message || 'Unknown error'}`,
         variant: 'destructive',
       });
     }
