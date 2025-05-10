@@ -5,21 +5,36 @@
  * @returns An object with bucket name and file path, or null if parsing fails
  */
 export function extractStoragePath(fileUrl: string): { bucket: string; path: string } | null {
+  if (!fileUrl) return null;
+  
   try {
-    const url = new URL(fileUrl);
-    const parts = url.pathname.split('/');
-    
-    // Find the 'object' part in the URL which indicates the start of the bucket path
-    const objectIndex = parts.findIndex(part => part === 'object');
-    
-    if (objectIndex < 0 || objectIndex + 1 >= parts.length) {
-      return null;
+    // Handle both full URLs and partial paths
+    if (fileUrl.startsWith('http')) {
+      const url = new URL(fileUrl);
+      const parts = url.pathname.split('/');
+      
+      // Find the 'object' part in the URL which indicates the start of the bucket path
+      const objectIndex = parts.findIndex(part => part === 'object');
+      
+      if (objectIndex < 0 || objectIndex + 1 >= parts.length) {
+        return null;
+      }
+      
+      const bucket = parts[objectIndex + 1];
+      const path = parts.slice(objectIndex + 2).join('/');
+      
+      return { bucket, path };
+    } else if (fileUrl.includes('/')) {
+      // Handle cases where only the storage path is provided
+      const parts = fileUrl.split('/');
+      if (parts.length >= 2) {
+        const bucket = parts[0];
+        const path = parts.slice(1).join('/');
+        return { bucket, path };
+      }
     }
     
-    const bucket = parts[objectIndex + 1];
-    const path = parts.slice(objectIndex + 2).join('/');
-    
-    return { bucket, path };
+    return null;
   } catch (error) {
     console.error('Failed to parse storage URL:', error);
     return null;
@@ -53,6 +68,7 @@ export async function removeFileFromStorage(fileUrl: string): Promise<boolean> {
       return false;
     }
     
+    console.log('File successfully removed from storage');
     return true;
   } catch (error) {
     console.error('Failed to remove file:', error);

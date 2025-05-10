@@ -9,6 +9,7 @@ import NotesList from '@/components/resources/NotesList';
 import { Button } from '@/components/ui/button';
 import { Upload } from 'lucide-react';
 import { toast as sonnerToast } from 'sonner';
+import { removeFileFromStorage } from '@/lib/fileUtils';
 
 const MyNotes = () => {
   const [notes, setNotes] = useState<any[]>([]);
@@ -91,36 +92,17 @@ const MyNotes = () => {
       
       // Optimistically update UI first
       setNotes(notes.filter(note => note.id !== noteId));
+      sonnerToast.loading('Deleting note...');
       
+      // Delete file from storage if it exists
       if (noteToDelete?.file_url) {
-        try {
-          const fileUrl = noteToDelete.file_url;
-          const parts = fileUrl.split('/');
-          const bucketIndex = parts.findIndex(part => part === 'object') + 1;
-          
-          if (bucketIndex > 0 && bucketIndex < parts.length) {
-            const bucket = parts[bucketIndex];
-            const path = parts.slice(bucketIndex + 1).join('/');
-            
-            console.log(`Attempting to delete file from bucket: ${bucket}, path: ${path}`);
-            
-            // Delete the file from storage
-            const { error: storageError } = await supabase
-              .storage
-              .from(bucket)
-              .remove([path]);
-              
-            if (storageError) {
-              console.error('Error deleting file from storage:', storageError);
-              sonnerToast.error('Warning: File storage deletion failed', {
-                description: "The database record will still be deleted"
-              });
-              // Continue even if storage deletion fails
-            }
-          }
-        } catch (fileError) {
-          console.error('Error processing file deletion:', fileError);
-          // Continue with database deletion even if file deletion has issues
+        const success = await removeFileFromStorage(noteToDelete.file_url);
+        
+        if (!success) {
+          console.warn('Warning: Could not delete file from storage');
+          sonnerToast.warning('Warning', {
+            description: 'File could not be deleted from storage, but the database record will be removed'
+          });
         }
       }
       
@@ -131,11 +113,10 @@ const MyNotes = () => {
         .eq('id', noteId);
       
       if (error) {
-        // If deletion fails, restore the note in the UI
-        setNotes(prev => [...prev, noteToDelete]);
         throw error;
       }
       
+      sonnerToast.dismiss();
       sonnerToast.success("Note deleted successfully");
       
     } catch (error: any) {

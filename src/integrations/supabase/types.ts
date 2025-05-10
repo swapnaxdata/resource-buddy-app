@@ -62,9 +62,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_user_upvote: {
+        Args: { resource_id: string }
+        Returns: boolean
+      }
       increment_upvote: {
         Args: { resource_id: string }
-        Returns: undefined
+        Returns: boolean
       }
       is_admin_role: {
         Args: Record<PropertyKey, never>
