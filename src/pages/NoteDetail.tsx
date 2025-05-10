@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -35,6 +36,7 @@ const NoteDetail = () => {
   const [note, setNote] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpvoting, setIsUpvoting] = useState(false);
+  const [hasUpvoted, setHasUpvoted] = useState(false);
   
   const { user, profile } = useAuth();
   const { toast } = useToast();
@@ -58,6 +60,20 @@ const NoteDetail = () => {
         }
         
         setNote(data);
+
+        // Check if user has already upvoted this note
+        if (user) {
+          const { data: upvoteData, error: upvoteError } = await supabase
+            .from('user_upvotes')
+            .select('*')
+            .eq('resource_id', id)
+            .eq('user_id', user.id)
+            .single();
+          
+          if (!upvoteError && upvoteData) {
+            setHasUpvoted(true);
+          }
+        }
       } catch (error) {
         console.error('Error fetching note:', error);
         toast({
@@ -72,10 +88,10 @@ const NoteDetail = () => {
     };
     
     fetchNote();
-  }, [id, toast, navigate]);
+  }, [id, toast, navigate, user]);
   
   const handleUpvote = async () => {
-    if (!user || !note) return;
+    if (!user || !note || hasUpvoted) return;
     
     try {
       // Prevent double clicks
@@ -92,7 +108,7 @@ const NoteDetail = () => {
       });
       
       // Call the increment_upvote function using RPC
-      const { error } = await supabase.rpc('increment_upvote', {
+      const { data, error } = await supabase.rpc('increment_upvote', {
         resource_id: note.id
       });
       
@@ -105,10 +121,25 @@ const NoteDetail = () => {
         throw error;
       }
       
-      toast({
-        title: "Success",
-        description: "You upvoted this note",
-      });
+      if (data === true) {
+        // Update UI state to show this note has been upvoted by the user
+        setHasUpvoted(true);
+        toast({
+          title: "Success",
+          description: "You upvoted this note",
+        });
+      } else {
+        // The user has already upvoted this note
+        toast({
+          title: "Already upvoted",
+          description: "You have already upvoted this note",
+        });
+        // Revert optimistic update since the upvote didn't actually increment
+        setNote({
+          ...note,
+          upvotes: currentUpvotes
+        });
+      }
       
     } catch (error: any) {
       console.error('Error upvoting:', error);
@@ -233,14 +264,14 @@ const NoteDetail = () => {
               
               <div className="flex items-center gap-2">
                 <Button 
-                  variant="outline" 
+                  variant={hasUpvoted ? "default" : "outline"}
                   size="sm"
                   onClick={handleUpvote}
-                  disabled={!user || isUpvoting}
-                  className="flex items-center gap-1"
+                  disabled={!user || isUpvoting || hasUpvoted}
+                  className={`flex items-center gap-1 ${hasUpvoted ? "bg-green-600 hover:bg-green-700" : ""}`}
                 >
                   <ArrowUp size={16} />
-                  <span>Upvote ({note.upvotes})</span>
+                  <span>{hasUpvoted ? "Upvoted" : "Upvote"} ({note.upvotes})</span>
                 </Button>
                 
                 {canDelete && (

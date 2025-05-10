@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -124,11 +123,11 @@ const MyNotes = () => {
         description: "Note deleted successfully",
       });
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting note:', error);
       toast({
         title: 'Error',
-        description: 'Failed to delete note',
+        description: `Failed to delete note: ${error.message || 'Unknown error'}`,
         variant: 'destructive',
       });
     }

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -66,23 +65,8 @@ const Index = () => {
     }
 
     try {
-      // First, get the current note to get its current upvote count
-      const { data: note, error: getError } = await supabase
-        .from('resources')
-        .select('upvotes')
-        .eq('id', noteId)
-        .single();
-
-      if (getError) {
-        console.error('Error fetching note details:', getError);
-        throw getError;
-      }
-
-      // Calculate the new upvote count
-      const newUpvoteCount = (note?.upvotes || 0) + 1;
-      
       // Call the increment_upvote function using RPC
-      const { error: updateError } = await supabase.rpc('increment_upvote', { 
+      const { data, error: updateError } = await supabase.rpc('increment_upvote', { 
         resource_id: noteId 
       });
 
@@ -91,18 +75,27 @@ const Index = () => {
         throw updateError;
       }
 
-      // Update the local state to reflect the change
-      setNotes(
-        notes.map((note) =>
-          note.id === noteId ? { ...note, upvotes: newUpvoteCount } : note
-        )
-      );
+      // Only update UI if upvote was successful (not previously upvoted)
+      if (data === true) {
+        // Update the local state to reflect the change
+        setNotes(
+          notes.map((note) =>
+            note.id === noteId ? { ...note, upvotes: note.upvotes + 1 } : note
+          )
+        );
 
-      toast({
-        title: 'Success',
-        description: 'Note upvoted successfully!',
-        variant: 'default',
-      });
+        toast({
+          title: 'Success',
+          description: 'Note upvoted successfully!',
+          variant: 'default',
+        });
+      } else {
+        toast({
+          title: 'Already upvoted',
+          description: 'You have already upvoted this note',
+          variant: 'default',
+        });
+      }
 
     } catch (error: any) {
       console.error('Error upvoting note:', error);
