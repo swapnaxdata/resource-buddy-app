@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -61,14 +60,18 @@ const NoteDetail = () => {
         
         setNote(data);
 
-        // Check if user has already upvoted this note by calling an RPC function
+        // Check if user has already upvoted this note using direct query instead of RPC
         if (user) {
           try {
-            const { data: upvoteData, error: upvoteError } = await supabase.rpc('check_user_upvote', {
-              resource_id: id
-            });
+            // Use a raw query instead of the typed RPC call
+            const { data: upvoteData, error: upvoteError } = await supabase
+              .from('user_upvotes')
+              .select('*')
+              .eq('resource_id', id)
+              .eq('user_id', user.id)
+              .maybeSingle();
             
-            if (!upvoteError && upvoteData === true) {
+            if (!upvoteError && upvoteData) {
               setHasUpvoted(true);
             }
           } catch (checkError) {

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -127,6 +126,7 @@ const Index = () => {
     }
   };
 
+  
   return (
     <MainLayout>
       <div className="space-y-8">
