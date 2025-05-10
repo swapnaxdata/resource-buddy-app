@@ -61,17 +61,18 @@ const NoteDetail = () => {
         
         setNote(data);
 
-        // Check if user has already upvoted this note
+        // Check if user has already upvoted this note by calling an RPC function
         if (user) {
-          const { data: upvoteData, error: upvoteError } = await supabase
-            .from('user_upvotes')
-            .select('*')
-            .eq('resource_id', id)
-            .eq('user_id', user.id)
-            .single();
-          
-          if (!upvoteError && upvoteData) {
-            setHasUpvoted(true);
+          try {
+            const { data: upvoteData, error: upvoteError } = await supabase.rpc('check_user_upvote', {
+              resource_id: id
+            });
+            
+            if (!upvoteError && upvoteData === true) {
+              setHasUpvoted(true);
+            }
+          } catch (checkError) {
+            console.error('Error checking upvote status:', checkError);
           }
         }
       } catch (error) {

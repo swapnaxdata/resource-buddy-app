@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -65,31 +66,50 @@ const Index = () => {
     }
 
     try {
+      // Find the note to update in the UI
+      const noteToUpdate = notes.find(note => note.id === noteId);
+      if (!noteToUpdate) return;
+      
+      // Current upvote count
+      const currentUpvotes = noteToUpdate.upvotes || 0;
+      
+      // Optimistically update the UI
+      setNotes(
+        notes.map((note) =>
+          note.id === noteId ? { ...note, upvotes: currentUpvotes + 1 } : note
+        )
+      );
+      
       // Call the increment_upvote function using RPC
-      const { data, error: updateError } = await supabase.rpc('increment_upvote', { 
+      const { data, error } = await supabase.rpc('increment_upvote', { 
         resource_id: noteId 
       });
 
-      if (updateError) {
-        console.error('Error updating upvote:', updateError);
-        throw updateError;
+      if (error) {
+        // Revert optimistic update if there's an error
+        setNotes(
+          notes.map((note) =>
+            note.id === noteId ? { ...note, upvotes: currentUpvotes } : note
+          )
+        );
+        throw error;
       }
 
       // Only update UI if upvote was successful (not previously upvoted)
       if (data === true) {
-        // Update the local state to reflect the change
-        setNotes(
-          notes.map((note) =>
-            note.id === noteId ? { ...note, upvotes: note.upvotes + 1 } : note
-          )
-        );
-
         toast({
           title: 'Success',
           description: 'Note upvoted successfully!',
           variant: 'default',
         });
       } else {
+        // Revert the optimistic update and show message
+        setNotes(
+          notes.map((note) =>
+            note.id === noteId ? { ...note, upvotes: currentUpvotes } : note
+          )
+        );
+        
         toast({
           title: 'Already upvoted',
           description: 'You have already upvoted this note',

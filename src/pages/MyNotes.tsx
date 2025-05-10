@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -74,7 +75,7 @@ const MyNotes = () => {
   
   const handleDeleteNote = async (noteId: string) => {
     try {
-      // First, find the note to get the file URL
+      // Find the note to delete
       const noteToDelete = notes.find(note => note.id === noteId);
       
       if (!noteToDelete) {
