@@ -8,11 +8,13 @@ import { useToast } from '@/components/ui/use-toast';
 import NotesList from '@/components/resources/NotesList';
 import { Button } from '@/components/ui/button';
 import { Upload } from 'lucide-react';
+import { toast as sonnerToast } from 'sonner';
 
 const MyNotes = () => {
   const [notes, setNotes] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -74,7 +76,12 @@ const MyNotes = () => {
   }, [user, toast]);
   
   const handleDeleteNote = async (noteId: string) => {
+    // Prevent multiple delete operations at once
+    if (isDeleting) return;
+    
     try {
+      setIsDeleting(true);
+      
       // Find the note to delete
       const noteToDelete = notes.find(note => note.id === noteId);
       
@@ -86,24 +93,34 @@ const MyNotes = () => {
       setNotes(notes.filter(note => note.id !== noteId));
       
       if (noteToDelete?.file_url) {
-        const fileUrl = noteToDelete.file_url;
-        const parts = fileUrl.split('/');
-        const bucketIndex = parts.findIndex(part => part === 'object') + 1;
-        
-        if (bucketIndex > 0 && bucketIndex < parts.length) {
-          const bucket = parts[bucketIndex];
-          const path = parts.slice(bucketIndex + 1).join('/');
+        try {
+          const fileUrl = noteToDelete.file_url;
+          const parts = fileUrl.split('/');
+          const bucketIndex = parts.findIndex(part => part === 'object') + 1;
           
-          // Delete the file from storage
-          const { error: storageError } = await supabase
-            .storage
-            .from(bucket)
-            .remove([path]);
+          if (bucketIndex > 0 && bucketIndex < parts.length) {
+            const bucket = parts[bucketIndex];
+            const path = parts.slice(bucketIndex + 1).join('/');
             
-          if (storageError) {
-            console.error('Error deleting file from storage:', storageError);
-            // Continue even if storage deletion fails
+            console.log(`Attempting to delete file from bucket: ${bucket}, path: ${path}`);
+            
+            // Delete the file from storage
+            const { error: storageError } = await supabase
+              .storage
+              .from(bucket)
+              .remove([path]);
+              
+            if (storageError) {
+              console.error('Error deleting file from storage:', storageError);
+              sonnerToast.error('Warning: File storage deletion failed', {
+                description: "The database record will still be deleted"
+              });
+              // Continue even if storage deletion fails
+            }
           }
+        } catch (fileError) {
+          console.error('Error processing file deletion:', fileError);
+          // Continue with database deletion even if file deletion has issues
         }
       }
       
@@ -119,18 +136,21 @@ const MyNotes = () => {
         throw error;
       }
       
-      toast({
-        title: "Success",
-        description: "Note deleted successfully",
-      });
+      sonnerToast.success("Note deleted successfully");
       
     } catch (error: any) {
       console.error('Error deleting note:', error);
-      toast({
-        title: 'Error',
-        description: `Failed to delete note: ${error.message || 'Unknown error'}`,
-        variant: 'destructive',
+      sonnerToast.error('Failed to delete note', {
+        description: error.message || 'Unknown error'
       });
+      
+      // Restore optimistically removed note if error occurred
+      const noteToRestore = notes.find(note => note.id === noteId);
+      if (noteToRestore) {
+        setNotes(prev => [...prev, noteToRestore]);
+      }
+    } finally {
+      setIsDeleting(false);
     }
   };
   

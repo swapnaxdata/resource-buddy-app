@@ -59,8 +59,8 @@ const NoteCard = ({ note, onUpvote, onDelete, showActions = false }: NoteCardPro
     }
   };
 
-  const handleDelete = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleDelete = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     if (onDelete) {
       onDelete(note.id);
     }
@@ -164,7 +164,7 @@ const NoteCard = ({ note, onUpvote, onDelete, showActions = false }: NoteCardPro
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction 
-                    onClick={handleDelete}
+                    onClick={() => handleDelete()}
                     className="bg-red-600 hover:bg-red-700"
                   >
                     Delete

@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -9,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 import { toast as sonnerToast } from "sonner";
+import { removeFileFromStorage } from '@/lib/fileUtils';
 import { 
   FileText, 
   User, 
@@ -166,27 +168,15 @@ const NoteDetail = () => {
     if (!note) return;
     
     try {
+      sonnerToast.loading('Deleting note...');
+      
       // First, try to delete from storage if there's a file URL
       if (note.file_url) {
-        const fileUrl = note.file_url;
-        
-        // Extract bucket and path
-        const parts = fileUrl.split('/');
-        const bucketIndex = parts.findIndex(part => part === 'object') + 1;
-        
-        if (bucketIndex > 0 && bucketIndex < parts.length) {
-          const bucket = parts[bucketIndex];
-          const path = parts.slice(bucketIndex + 1).join('/');
-          
-          const { error: storageError } = await supabase
-            .storage
-            .from(bucket)
-            .remove([path]);
-            
-          if (storageError) {
-            console.error('Error deleting file from storage:', storageError);
-            // Continue even if storage deletion fails
-          }
+        const success = await removeFileFromStorage(note.file_url);
+        if (!success) {
+          sonnerToast.warning('Warning', {
+            description: 'File could not be deleted from storage, but the database entry will be removed'
+          });
         }
       }
       
@@ -200,18 +190,14 @@ const NoteDetail = () => {
         throw error;
       }
       
-      toast({
-        title: 'Success',
-        description: 'Note deleted successfully',
-      });
+      sonnerToast.dismiss();
+      sonnerToast.success('Note deleted successfully');
       
-      navigate('/');
+      navigate('/my-notes');
     } catch (error: any) {
       console.error('Error deleting note:', error);
-      toast({
-        title: 'Error',
-        description: `Failed to delete note: ${error.message || 'Unknown error'}`,
-        variant: 'destructive',
+      sonnerToast.error('Error deleting note', {
+        description: error.message || 'Unknown error'
       });
     }
   };
