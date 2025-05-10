@@ -60,18 +60,23 @@ const NoteDetail = () => {
         
         setNote(data);
 
-        // Check if user has already upvoted this note using direct query instead of RPC
+        // Check if user has already upvoted this note
         if (user) {
           try {
-            // Use a raw query instead of the typed RPC call
-            const { data: upvoteData, error: upvoteError } = await supabase
-              .from('user_upvotes')
-              .select('*')
-              .eq('resource_id', id)
-              .eq('user_id', user.id)
-              .maybeSingle();
+            // Use the REST API directly as a workaround for type issues
+            const { data: upvoteData, error: upvoteError } = await fetch(
+              `https://ajqoymqeguaavkujpdom.supabase.co/rest/v1/user_upvotes?user_id=eq.${user.id}&resource_id=eq.${id}`,
+              {
+                method: 'GET',
+                headers: {
+                  'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFqcW95bXFlZ3VhYXZrdWpwZG9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY2NDYwNDEsImV4cCI6MjA2MjIyMjA0MX0.q-81PTe_r25K7tcs8gWq2a7nE2e4HZCUY5qrKKCIvfg',
+                  'Authorization': `Bearer ${supabase.auth.getSession().then(res => res.data.session?.access_token)}`,
+                  'Content-Type': 'application/json'
+                }
+              }
+            ).then(res => res.json());
             
-            if (!upvoteError && upvoteData) {
+            if (!upvoteError && upvoteData && upvoteData.length > 0) {
               setHasUpvoted(true);
             }
           } catch (checkError) {
