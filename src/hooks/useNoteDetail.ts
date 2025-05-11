@@ -146,16 +146,17 @@ export function useNoteDetail() {
       sonnerToast.loading('Deleting note...');
       
       // First, try to delete from storage if there's a file URL
+      let storageSuccess = true;
       if (note.file_url) {
-        const success = await removeFileFromStorage(note.file_url);
-        if (!success) {
+        storageSuccess = await removeFileFromStorage(note.file_url);
+        if (!storageSuccess) {
           sonnerToast.warning('Warning', {
             description: 'File could not be deleted from storage, but the database entry will be removed'
           });
         }
       }
       
-      // Then delete the database record
+      // Continue with database deletion regardless of storage success
       const { error } = await supabase
         .from('resources')
         .delete()
