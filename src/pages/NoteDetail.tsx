@@ -35,7 +35,7 @@ const NoteDetail = () => {
   if (!note) {
     return (
       <MainLayout>
-        <NoteDetailState error={true} />
+        <NoteDetailState isLoading={false} error={true} />
       </MainLayout>
     );
   }
